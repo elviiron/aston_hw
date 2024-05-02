@@ -1,0 +1,72 @@
+@startuml
+
+participant User
+participant App
+participant TaxiService
+participant TaxiDriver
+activate App
+activate User
+alt Зарегистрирован
+    App ->> User: Перейдем к заказу
+    
+else Не зарегистрирован
+    App ->> User: Предложить зарегистрироваться
+    User -->> App: Вводит данные
+end
+
+alt Изменить профиль
+    User ->> App: Меняет данные
+    App -->> User: Данные изменены
+else Не менять данные
+    User -> App: Ок
+end
+User ->> App: Выбрать место отправления
+App -->> User: Получили место отправления
+User ->> App: Выбрать место прибытия
+App -->> User: Получили место прибытия
+User ->> App: Выбрать тариф
+App -->> User: Получили тариф
+User ->> App: Выбрать способ оплаты
+
+alt способ оплаты - карта
+    User ->> App: Вводит данные карты
+    App ->> App: Проверяет данные
+    activate TaxiService
+    App ->> TaxiService: Обрабатывает платеж
+    TaxiService -->> App: Платеж получен
+    App -->> User: Платеж успешно прошел
+    deactivate TaxiService
+else способ оплаты - наличные
+    App -> User: Ок
+end
+User -> App: Подтверждение заказа
+activate TaxiService
+loop (не нашел информацию о ближайшем такси)
+    App -> TaxiService: Запрос на поиск доступного такси
+end
+activate TaxiDriver
+TaxiService --> App: Получает информацию о водителе
+deactivate TaxiService
+App ->> TaxiDriver: Отправляет запрос на подтверждает заказа
+TaxiDriver -->> App: Подтверждает заказ
+
+TaxiDriver --> User: Получает статус заказа
+App --> User: Получает информацию о водителе
+
+alt Читать отзывы
+    User ->> App: Хочет прочитать отзывы о водителе
+    App -->> User: Получает отзывы о водителе
+    
+else Не читать отзывы 
+    App -> User: Отправляет сообщение, что "Водитель в пути!"
+end
+alt Получить номер телефона
+        User ->> TaxiDriver: Звонит/пишет водителю
+        TaxiDriver -->> User: Отвечает пользователю
+    else Не хотим записывать номер телефона
+        App ->> User: Ок
+    end
+deactivate User
+deactivate App
+deactivate TaxiDriver
+@enduml
